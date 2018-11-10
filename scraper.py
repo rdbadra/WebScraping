@@ -48,48 +48,7 @@ def go_to_next_page(origin, href):
             municipios.append(a.get_text())
     return hrefs_municipio, municipios
 
-def get_data_municipio2(municipio, origin, href):
-    dataPage = origin+href
-    page = requests.get(dataPage)
-    soup = BeautifulSoup(page.content, features="html.parser")
-    thead = soup.find('thead')
-    fechas = thead.find_all('th')
-    fec_str = []
-    precipitaciones = []
-    for fec in fechas:
-        fec_str.append(fec.get_text())
-    tbody = soup.find('tbody')
-    cab = tbody.find('tr', attrs={'class':'cabecera_loc_niv2'})
-    ths = cab.find_all('th')
-    horario = []
-    temperatura = []
-    for th in ths:
-        if(len(th.find_all('div'))>0):
-            horario.append(th.find_all('div')[0].get_text())
-        if(len(th.find_all('div'))>2):
-            temperatura.append(th.find_all('div')[2].get_text())
-
-    
-    cab = tbody.find_all('tr')
-    tds = cab[2].find_all('td')
-    for td in tds:
-        precipitaciones.append(td.get_text())
-
-    temps = cab[6]
-    tempsMax = temps.find_all('span', attrs={'class':'texto_rojo'})
-    tempsMin = temps.find_all('span', attrs={'class':'texto_azul'})
-
-    maxTemp = []
-    minTemp = []
-    for tempMax in tempsMax:
-        maxTemp.append(str.strip(tempMax.get_text()))
-
-    for tempMin in tempsMin:
-        minTemp.append(str.strip(tempMin.get_text()))
-
-    
-    csv = open('test.csv', "w+")
-    csv.write("municipio;fecha;horario;temperatura_actual;probabilidad_precipitacion;temperatura_minima;temepratura_maxima;\n")
+def insert_data_in_file(csv, precipitaciones, fec_str, municipio, provincia, maxTemp, minTemp, temperaturas, horarios):
     temp = ""
     fechaAqui = ""
     miTemp = ""
@@ -124,10 +83,67 @@ def get_data_municipio2(municipio, origin, href):
             miTemp = minTemp[6]
             maTemp = maxTemp[6]
         if(i < 5):
-            temp = temperatura[i]
+            temp = temperaturas[i]
         else:
             temp = ""
-        csv.write(municipio+";"+fechaAqui+";"+horario[i]+";"+temp+";"+precipitaciones[i]+";"+miTemp+";" + maTemp+";"  +";\n")
+        csv.write(municipio+";"+provincia+";"+fechaAqui+";"+horarios[i]+";"+temp+";"+precipitaciones[i]+";"+miTemp+";" + maTemp+";"  +";\n")
+
+def get_data_municipio2(csv, municipio, origin, href, provincia):
+    
+    fec_str = []
+    precipitaciones = []
+    horarios = []
+    temperaturas = []
+    maxTemp = []
+    minTemp = []
+
+    dataPage = origin+href
+    page = requests.get(dataPage)
+    soup = BeautifulSoup(page.content, features="html.parser")
+    thead = soup.find('thead')
+    fechas = thead.find_all('th')
+
+    # Se cogen las fechas de cada estado temporal
+
+    for fec in fechas:
+        fec_str.append(fec.get_text())
+    tbody = soup.find('tbody')
+    cab = tbody.find('tr', attrs={'class':'cabecera_loc_niv2'})
+    ths = cab.find_all('th')
+    
+
+    
+    
+    # Se cogen los datos de los horarios y las temperaturas que habrá en esos horarios
+    
+    for th in ths:
+        if(len(th.find_all('div'))>0):
+            horarios.append(th.find_all('div')[0].get_text())
+        if(len(th.find_all('div'))>2):
+            temperaturas.append(th.find_all('div')[2].get_text())
+
+    
+    # Se cogen los datos de probabilidad de precipitaciones por día
+
+    cab = tbody.find_all('tr')
+    tds = cab[2].find_all('td')
+    for td in tds:
+        precipitaciones.append(td.get_text())
+
+    temps = cab[6]
+    tempsMax = temps.find_all('span', attrs={'class':'texto_rojo'})
+    tempsMin = temps.find_all('span', attrs={'class':'texto_azul'})
+
+    # Se cogen las temperaturas máximas y mínimas de cada día
+
+    for tempMax in tempsMax:
+        maxTemp.append(str.strip(tempMax.get_text()))
+
+    for tempMin in tempsMin:
+        minTemp.append(str.strip(tempMin.get_text()))
+
+    insert_data_in_file(csv, precipitaciones, fec_str, municipio, provincia, maxTemp, minTemp, temperaturas, horarios)
+
 
 
 def get_data_municipio(origin, href):
@@ -147,15 +163,25 @@ def get_data_municipio(origin, href):
             temperatura = th.find_all('div')[2].get_text()
 
 def main():
+    csv = open('tiempo_semanal_municipios.csv', "w+")
+    csv.write("municipio;provincia;fecha;horario;temperatura_actual;probabilidad_precipitacion;temperatura_minima;temperatura_maxima;\n")
     webPage = "http://www.aemet.es/es/eltiempo/prediccion/municipios"
     origin = "http://www.aemet.es"
     hrefs, provincias = get_hrefs(webPage)
-    #for href in hrefs:
-    #    go_to_next_page(origin, href)
-    #    delay()
-    delay()
-    hs, mun = go_to_next_page(origin, hrefs[0])
-    delay()
-    get_data_municipio2(mun[0], origin, hs[0])
+    for i in range(len(hrefs)):
+        if(provincias[i] != 'Ceuta' and provincias[i] != 'Melilla'):
+            hs, municipios = go_to_next_page(origin, hrefs[i])
+            delay()
+            for j in range(len(hs)):
+                get_data_municipio2(csv, municipios[j], origin, hs[j], provincias[i])
+                delay()
+            
+        else:
+            get_data_municipio2(csv, provincias[i], origin, hrefs[i], provincias[i])    
+        print("Terminado para "+str(provincias[i]))
+        
+        
+        
+
 
 main()

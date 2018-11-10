@@ -88,30 +88,46 @@ def get_data_municipio2(municipio, origin, href):
         minTemp.append(str.strip(tempMin.get_text()))
 
     
-    
-    with open("test.csv", "w+") as file:
-        temp = ""
-        fechaAqui = ""
-        for i in range(12):
-            if(i is 0):
-                fechaAqui = fec_str[0]
-            if(i > 0 and i<5):
-                fechaAqui = fec_str[1]
-            if(i > 5 and i < 7):
-                fechaAqui = fec_str[2]
-            if(i >= 7 and i < 9):
-                fechaAqui = fec_str[3]
-            if(i is 9):
-                fechaAqui = fec_str[4]
-            if(i is 10):
-                fechaAqui = fec_str[5]
-            if(i is 11):
-                fechaAqui = fec_str[6]
-            if(i < 5):
-                temp = temperatura[i]
-            else:
-                temp = ""
-            file.write(municipio+";"+fechaAqui+";"+horario[i]+";"+temp+";\n")
+    csv = open('test.csv', "w+")
+    csv.write("municipio;fecha;horario;temperatura_actual;probabilidad_precipitacion;temperatura_minima;temepratura_maxima;\n")
+    temp = ""
+    fechaAqui = ""
+    miTemp = ""
+    maTemp = ""
+    for i in range(12):
+        if(i is 0):
+            fechaAqui = fec_str[0]
+            miTemp = minTemp[0]
+            maTemp = maxTemp[0]
+        if(i > 0 and i<5):
+            fechaAqui = fec_str[1]
+            miTemp = minTemp[1]
+            maTemp = maxTemp[1]
+        if(i > 5 and i < 7):
+            fechaAqui = fec_str[2]
+            miTemp = minTemp[2]
+            maTemp = maxTemp[2]
+        if(i >= 7 and i < 9):
+            fechaAqui = fec_str[3]
+            miTemp = minTemp[3]
+            maTemp = maxTemp[3]
+        if(i is 9):
+            fechaAqui = fec_str[4]
+            miTemp = minTemp[4]
+            maTemp = maxTemp[4]
+        if(i is 10):
+            fechaAqui = fec_str[5]
+            miTemp = minTemp[5]
+            maTemp = maxTemp[5]
+        if(i is 11):
+            fechaAqui = fec_str[6]
+            miTemp = minTemp[6]
+            maTemp = maxTemp[6]
+        if(i < 5):
+            temp = temperatura[i]
+        else:
+            temp = ""
+        csv.write(municipio+";"+fechaAqui+";"+horario[i]+";"+temp+";"+precipitaciones[i]+";"+miTemp+";" + maTemp+";"  +";\n")
 
 
 def get_data_municipio(origin, href):
